@@ -15,8 +15,14 @@ import Image from "next/image";
 import SpeciesDetailDialog from "./species-detail-dialog";
 
 type Species = Database["public"]["Tables"]["species"]["Row"];
+type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
-export default function SpeciesCard({ species, userId }: { species: Species; userId: string }) {
+// Extended type for species with joined author profile
+export type SpeciesWithAuthor = Species & {
+  profiles: Pick<Profile, "display_name"> | null;
+};
+
+export default function SpeciesCard({ species, userId }: { species: SpeciesWithAuthor; userId: string }) {
   return (
     <div className="m-4 flex h-[420px] w-72 min-w-72 flex-none flex-col rounded border-2 p-3 shadow">
       {species.image && (
