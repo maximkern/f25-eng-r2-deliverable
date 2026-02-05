@@ -38,6 +38,12 @@ export default function SpeciesDetailDialog({ species, userId }: { species: Spec
               <h4 className="text-sm font-medium text-muted-foreground">Total Population</h4>
               <p className="text-base">{species.total_population?.toLocaleString() ?? "Unknown"}</p>
             </div>
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground">Conservation Status</h4>
+              <p className={`text-base font-medium ${species.endangered ? "text-red-600" : "text-green-600"}`}>
+                {species.endangered ? "Endangered" : "Not Endangered"}
+              </p>
+            </div>
           </div>
 
           {species.description && (

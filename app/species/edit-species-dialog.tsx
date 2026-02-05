@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -53,6 +54,7 @@ const speciesSchema = z.object({
     .string()
     .nullable()
     .transform((val) => (!val || val.trim() === "" ? null : val.trim())),
+  endangered: z.boolean(),
 });
 
 type FormData = z.infer<typeof speciesSchema>;
@@ -71,6 +73,7 @@ export default function EditSpeciesDialog({ species }: { species: Species }) {
       total_population: species.total_population,
       image: species.image,
       description: species.description,
+      endangered: species.endangered,
     },
     mode: "onChange",
   });
@@ -88,6 +91,7 @@ export default function EditSpeciesDialog({ species }: { species: Species }) {
           total_population: input.total_population,
           image: input.image,
           description: input.description,
+          endangered: input.endangered,
         })
         .eq("id", species.id);
 
@@ -242,6 +246,19 @@ export default function EditSpeciesDialog({ species }: { species: Species }) {
                     </FormItem>
                   );
                 }}
+              />
+              <FormField
+                control={form.control}
+                name="endangered"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(checked === true)} />
+                    </FormControl>
+                    <FormLabel className="font-normal">Endangered Species</FormLabel>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               <div className="flex justify-end gap-2">
                 <DialogClose asChild>
