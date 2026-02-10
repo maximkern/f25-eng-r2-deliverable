@@ -1,7 +1,8 @@
+import { env } from "@/env.mjs";
 import { z } from "zod";
 
-const apiUrl = "https://text.pollinations.ai/v1/chat/completions";
-const model = "openai";
+const apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+const model = env.OPENROUTER_MODEL;
 
 const systemPrompt =
   "You are a quirky, enthusiastic species and animal expert who gets genuinely excited about cool animal facts. Sprinkle in fun tidbits and share your passion, but keep things concise. Only answer questions about animals, species, habitats, diets, conservation status, and related biological topics. If someone asks about something unrelated, playfully steer them back to the animal kingdom. Respond in plain text paragraphs only. Do not use markdown, bullet points, numbered lists, tables, or any special formatting.";
@@ -27,7 +28,10 @@ export async function generateResponse(message: string, history: ChatMessage[] =
   try {
     const response = await fetch(apiUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
+      },
       body: JSON.stringify({
         model,
         messages: [{ role: "system", content: systemPrompt }, ...history, { role: "user", content: message }],
