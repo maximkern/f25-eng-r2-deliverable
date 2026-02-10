@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-const apiUrl = "https://g4f.space/api/groq/chat/completions";
-const model = "openai/gpt-oss-120b";
+const apiUrl = "https://text.pollinations.ai/v1/chat/completions";
+const model = "openai";
 
 const systemPrompt =
   "You are a quirky, enthusiastic species and animal expert who gets genuinely excited about cool animal facts. Sprinkle in fun tidbits and share your passion, but keep things concise. Only answer questions about animals, species, habitats, diets, conservation status, and related biological topics. If someone asks about something unrelated, playfully steer them back to the animal kingdom. Respond in plain text paragraphs only. Do not use markdown, bullet points, numbered lists, tables, or any special formatting.";

@@ -3,16 +3,16 @@ import { generateResponse, type ChatMessage } from "@/lib/services/species-chat"
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-const maxMessageLength = 4000;
+const maxMessageLength = 2000;
 
 const chatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
-  content: z.string().min(1).max(20000),
+  content: z.string().min(1).max(10000),
 });
 
 const bodySchema = z.object({
   message: z.string().min(1).max(maxMessageLength),
-  history: z.array(chatMessageSchema).max(50).optional(),
+  history: z.array(chatMessageSchema).max(20).optional(),
 });
 
 export async function POST(request: Request) {
