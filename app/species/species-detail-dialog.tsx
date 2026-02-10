@@ -18,6 +18,7 @@ import { createBrowserSupabaseClient } from "@/lib/client-utils";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import CommentsSection from "./comments-section";
 import EditSpeciesDialog from "./edit-species-dialog";
 import type { SpeciesWithAuthor } from "./species-card";
 
@@ -133,6 +134,8 @@ export default function SpeciesDetailDialog({ species, userId }: { species: Spec
             <Button variant="secondary">Close</Button>
           </DialogClose>
         </div>
+
+        <CommentsSection speciesId={species.id} userId={userId} />
       </DialogContent>
     </Dialog>
   );

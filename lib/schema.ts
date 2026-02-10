@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
+/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/no-redundant-type-constituents */
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-export interface Database {
+export type Database = {
   graphql_public: {
     Tables: {
       [_ in never]: never;
@@ -29,6 +29,45 @@ export interface Database {
   };
   public: {
     Tables: {
+      comments: {
+        Row: {
+          author: string;
+          content: string;
+          created_at: string;
+          id: number;
+          species_id: number;
+        };
+        Insert: {
+          author: string;
+          content: string;
+          created_at?: string;
+          id?: number;
+          species_id: number;
+        };
+        Update: {
+          author?: string;
+          content?: string;
+          created_at?: string;
+          id?: number;
+          species_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "comments_author_fkey";
+            columns: ["author"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "comments_species_id_fkey";
+            columns: ["species_id"];
+            isOneToOne: false;
+            referencedRelation: "species";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           biography: string | null;
@@ -108,7 +147,7 @@ export interface Database {
       [_ in never]: never;
     };
   };
-}
+};
 
 type PublicSchema = Database[Extract<keyof Database, "public">];
 
