@@ -21,7 +21,9 @@ export default async function UsersPage() {
 
   return (
     <>
-      <TypographyH2>Users</TypographyH2>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+        <TypographyH2>Users</TypographyH2>
+      </div>
       <Separator className="my-4" />
       {error ? (
         <p className="text-destructive">Failed to load users. Please try again later.</p>
