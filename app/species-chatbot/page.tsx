@@ -3,11 +3,15 @@
 import { TypographyH2, TypographyP } from "@/components/ui/typography";
 import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { z } from "zod";
+
+const chatApiResponseSchema = z.object({ response: z.string() });
 
 export default function SpeciesChatbot() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [message, setMessage] = useState("");
   const [chatLog, setChatLog] = useState<{ role: "user" | "bot"; content: string }[]>([]);
+  const [loading, setLoading] = useState(false);
   const handleInput = () => {
     const textarea = textareaRef.current;
     if (textarea) {
@@ -16,11 +20,44 @@ export default function SpeciesChatbot() {
     }
   };
 
-const handleSubmit = async () => {
-  // TODO: Implement this function
-}
+  const handleSubmit = async () => {
+    const trimmed = message.trim();
+    if (!trimmed || loading) return;
 
-return (
+    const history = chatLog.map((msg) => ({
+      role: msg.role === "user" ? ("user" as const) : ("assistant" as const),
+      content: msg.content,
+    }));
+
+    setChatLog((prev) => [...prev, { role: "user", content: trimmed }]);
+    setMessage("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmed, history }),
+      });
+
+      if (!res.ok) {
+        setChatLog((prev) => [...prev, { role: "bot", content: "Something went wrong. Please try again." }]);
+        return;
+      }
+
+      const data: unknown = await res.json();
+      const parsed = chatApiResponseSchema.safeParse(data);
+      const response = parsed.success ? parsed.data.response : null;
+
+      setChatLog((prev) => [...prev, { role: "bot", content: response ?? "Sorry, I couldn't get a response." }]);
+    } catch {
+      setChatLog((prev) => [...prev, { role: "bot", content: "Failed to connect. Please try again." }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
     <>
       <TypographyH2>Species Chatbot</TypographyH2>
       <div className="mt-4 flex gap-4">
@@ -66,16 +103,24 @@ return (
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onInput={handleInput}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                void handleSubmit();
+              }
+            }}
             rows={1}
+            disabled={loading}
             placeholder="Ask about a species..."
-            className="w-full resize-none overflow-hidden rounded border border-border bg-background p-2 text-sm text-foreground focus:outline-none"
+            className="w-full resize-none overflow-hidden rounded border border-border bg-background p-2 text-sm text-foreground focus:outline-none disabled:opacity-50"
           />
           <button
             type="button"
+            disabled={loading}
             onClick={() => void handleSubmit()}
-            className="mt-2 rounded bg-primary px-4 py-2 text-background transition hover:opacity-90"
+            className="mt-2 rounded bg-primary px-4 py-2 text-background transition hover:opacity-90 disabled:opacity-50"
           >
-            Enter
+            {loading ? "Thinking..." : "Enter"}
           </button>
         </div>
       </div>
