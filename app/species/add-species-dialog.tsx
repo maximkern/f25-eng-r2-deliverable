@@ -60,6 +60,14 @@ const speciesSchema = z.object({
 
 type FormData = z.infer<typeof speciesSchema>;
 
+// Schema for validating relevant fields from the Wikipedia API response
+const wikiResponseSchema = z.object({
+  title: z.string().optional(),
+  extract: z.string().optional(),
+  originalimage: z.object({ source: z.string().url() }).optional(),
+  thumbnail: z.object({ source: z.string().url() }).optional(),
+});
+
 // Default values for the form fields.
 /* Because the react-hook-form (RHF) used here is a controlled form (not an uncontrolled form),
 fields that are nullable/not required should explicitly be set to `null` by default.
@@ -83,12 +91,83 @@ export default function AddSpeciesDialog({ userId }: { userId: string }) {
   // Control open/closed state of the dialog
   const [open, setOpen] = useState<boolean>(false);
 
+  // Wikipedia search state
+  const [search, setSearch] = useState<string>("");
+  const [searching, setSearching] = useState<boolean>(false);
+
   // Instantiate form functionality with React Hook Form, passing in the Zod schema (for validation) and default values
   const form = useForm<FormData>({
     resolver: zodResolver(speciesSchema),
     defaultValues,
     mode: "onChange",
   });
+
+  // Query Wikipedia for species info and autofill description + image
+  const handleSearch = async () => {
+    const trimmed = search.trim();
+    if (!trimmed) return;
+
+    setSearching(true);
+    try {
+      const title = encodeURIComponent(trimmed.replaceAll(" ", "_"));
+      const response = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${title}`, {
+        headers: { "Api-User-Agent": "BiodiversityHub/1.0" },
+      });
+
+      if (response.status === 404) {
+        toast({
+          title: "No results found.",
+          description: `No Wikipedia article found for "${trimmed}".`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!response.ok) {
+        toast({
+          title: "Something went wrong.",
+          description: "Failed to fetch species information from Wikipedia.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const json: unknown = await response.json();
+      const result = wikiResponseSchema.safeParse(json);
+
+      if (!result.success) {
+        toast({
+          title: "Something went wrong.",
+          description: "Unexpected response from Wikipedia.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data } = result;
+
+      if (data.title) {
+        form.setValue("common_name", data.title, { shouldValidate: true });
+      }
+
+      if (data.extract) {
+        form.setValue("description", data.extract, { shouldValidate: true });
+      }
+
+      const imageUrl = data.originalimage?.source ?? data.thumbnail?.source;
+      if (imageUrl) {
+        form.setValue("image", imageUrl, { shouldValidate: true });
+      }
+    } catch {
+      toast({
+        title: "Something went wrong.",
+        description: "Could not connect to Wikipedia. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSearching(false);
+    }
+  };
 
   const onSubmit = async (input: FormData) => {
     // The `input` prop contains data that has already been processed by zod. We can now use it in a supabase query
@@ -148,6 +227,22 @@ export default function AddSpeciesDialog({ userId }: { userId: string }) {
             Add a new species here. Click &quot;Add Species&quot; below when you&apos;re done.
           </DialogDescription>
         </DialogHeader>
+        <div className="flex gap-2">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search Wikipedia for species info..."
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void handleSearch();
+              }
+            }}
+          />
+          <Button type="button" variant="secondary" disabled={searching} onClick={() => void handleSearch()}>
+            {searching ? "Searching..." : "Search"}
+          </Button>
+        </div>
         <Form {...form}>
           <form onSubmit={(e: BaseSyntheticEvent) => void form.handleSubmit(onSubmit)(e)}>
             <div className="grid w-full items-center gap-4">
